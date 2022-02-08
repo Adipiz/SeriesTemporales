@@ -1,0 +1,96 @@
+---
+title: "Datos Faltantes y atípicos en una Serie Temporal"
+author: "*Alonso Pizarro Lagunas*"
+date: "*4/1/2022*"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Valores faltantes o atípicos 
+
+Importamos la data
+```{r data}
+# Carga de la data
+myData <- read.csv("C:/Users/sept/Desktop/Directorio/CIDE/Trabajos de R/CursoSeriesTemporales/DataSets/Rmissing.csv")
+
+# Visualización primeros datos y estructura
+head(myData)
+str(myData)
+```
+
+
+
+  - Transformación de mi columna de valores en una serie temporal usando la función `ts` del paquete `tseries` en `R`.
+```{r ts}
+
+myTimeSeries <- ts(myData$mydata) # ; myTimeSeries
+str(myTimeSeries) # Estructura de datos
+summary(myTimeSeries) # tabla resumen
+```
+
+
+### Gráfica de datos
+
+  - Vemos 5 datos faltantes en la gráfica. Además de ver valores atípicos "altos" en forma de picos en la serie.
+
+```{r plot, fig.align='center'}
+
+plot(myTimeSeries, main = "Time Series example", ylab = "Value")
+```
+
+
+#### Mediante el paquete `zoo` podemos ubicar y rellenar valores faltantes en la serie.
+
+```{r zoo, warning=FALSE}
+library(zoo)
+
+# opciones de relleno de datos faltantes
+
+# Con locf
+myTimeSeries.nalocf <- na.locf(myTimeSeries) # locf: last observation carried forward (copia la última observación antes del na)
+
+# Con un valor arbitrario a través de na.fill
+myTimeSeries.nafill <- na.fill(myTimeSeries, 33)
+```
+
+
+#### Detección automática de valores atípicos con `forecast`
+
+```{r forecast, fig.align='center'}
+library(forecast)
+
+# Valores atípicos y sugiere reemplazo para esos valores 
+myTimeSeriesOut <- tsoutliers(myTimeSeries)
+myTimeSeriesOut
+
+
+# Además cuenta con funciones para la manipulación  de NAs 
+
+# método de relleno de NAs mediante interpolación.
+myTimeSeries.nainter <- na.interp(myTimeSeries) 
+
+# Método de limpieza de NAs y valores atípicos 
+myTimeSeries.clean <- tsclean(myTimeSeries)
+
+
+# Note la diferencia entre la data original y la 'limpia' respecton de valores atípicos y Na´s
+str(myTimeSeries)
+str(myTimeSeries.clean)
+
+summary(myTimeSeries)
+summary(myTimeSeries.clean)
+
+# Hacemos un plot de la nueva data
+
+plot(myTimeSeries.clean, main = 'Time Series modified')
+
+```
+
+
+
+

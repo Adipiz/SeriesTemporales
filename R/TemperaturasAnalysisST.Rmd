@@ -1,0 +1,64 @@
+---
+title: "ST:Análisis de temperaturas"
+author: "Alonso Pizarro Lagunas"
+date: "10/1/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Estacionariedad
+
+```{r}
+library(tseries)
+library(forecast)
+
+# Series estacionaria
+x <- rnorm(1000)
+
+# Aplicando el método de Dickey-Fuller 
+adf.test(x)
+
+
+# Nottem DataSet
+plot(nottem)
+
+
+# Descomposición tendencia, estacionalidad y residuo.
+plot(decompose(nottem))
+
+# Aplicación de test D-F a las serie 'nottem'
+adf.test(nottem)
+
+# Simular una serie no estacionaria
+y <- diffinv(x)
+plot(y)
+
+# D-F test
+adf.test(y)
+
+# Autocorrelación: ACF y PACF con los datos de temperatura.
+acf(nottem, lag.max = 20, plot = T)
+pacf(nottem, lag.max = 20, plot = T)
+
+
+# ACF de white noise
+acf(x,plot = T)
+
+
+# Descomposición alternativa, se puede usar con ggplot
+autoplot(decompose(nottem, type = 'additive'))
+
+
+# otra opción es con loess
+
+plot(stl(nottem, s.window = "periodic"))
+
+# Para acceder a un componente de la serie es necesario guardar en un objeto ya que se guarda como una lista
+
+nottemts <- decompose(nottem, type = 'multiplicative')
+plot(nottemts)
+```
+

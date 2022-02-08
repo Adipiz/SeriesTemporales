@@ -1,0 +1,57 @@
+---
+title: "Creando una Serie temporal"
+author: "Alonso Pizarro Lagunas"
+date: "4/1/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Objeto serie de tiempo
+
+```{r data}
+
+# Creamos datos proveniente de una dsitribución uniforme 
+myData <- runif(n = 50, min = 0, max = 45)
+
+
+# trabajaremos con la clase ts() empezando por 1956 con una frecuencia de 4 observacione por año, es decir, cuatrimestres.
+
+myTimeSeries <- ts(myData, start = 1956, frequency = 4); myTimeSeries
+
+class(myTimeSeries)
+```
+
+
+### Visualizando la serie de tiempo generada
+
+```{r plot}
+
+plot(myTimeSeries)
+```
+
+
+Podemos redefinir nuestra serie en el parámetro `start = c(year, month)`
+
+```{r}
+myTimeSeries <- ts(myData, start = c(1956, 3), frequency = 4); myTimeSeries 
+```
+
+
+Podemos hacer uso de otras series de tiempo como la de `nottem`: Average Monthly Temperatures at Nottingham, 1920–1939
+
+```{r nottem}
+
+library(ggplot2)
+
+plot(nottem)
+
+
+autoplot((nottem))
+
+autoplot(nottem) + ggtitle(" Average Monthly Temperatures at Nottingham, 1920–1939")
+```
+

@@ -1,0 +1,246 @@
+---
+title: "Objetos ts vs zoo"
+author: "*Alonso Pizarro Lagunas*"
+date: "*4/1/2022*"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Librerías
+library(tidyverse)
+```
+
+## Creando objetos `ts` y `zoo` para manipular *series de tiempo*
+
+En este breve resumen trabajaremos con datos de precios de cierre de Starbucks y Microsoft
+
+
+```{r datasets}
+# Importación de datsets
+
+# Starbucks dataset
+sbuxData <- read.csv("../DataSets/sbuxPrices.csv")
+
+# structure
+str(sbuxData)
+
+# head()
+head(sbuxData, 5)
+  
+# summary
+summary(sbuxData)
+
+
+##############################################
+# Microsoft Dataset
+msftdata <- read.csv("../DataSets/msftPrices.csv")
+
+str(msftdata)
+
+head(msftdata)
+
+summary(msftdata)
+```
+
+  - Hacemos la transformación de los datos a objetos `ts`. Notemos que tenemos datos mensuales.
+
+```{r ts}
+
+# Transformando los datos de Starbucks
+sbuxData.ts <- ts(sbuxData$Adj.Close, frequency = 12, start = c(1993,3), end = c(2008,3)); class(sbuxData.ts)
+
+# Transformando los datos de Microsoft
+msftdata.ts <- ts(msftdata$Adj.Close, frequency = 12, start = c(1993,3), end = c(2008,3)); class(msftdata.ts)
+
+# Para mayor info podemos consultar la documentación.
+
+
+# Algunas aplicaciones de ts para hacer consulta
+start(msftdata.ts)        # Cuándo inicia la serie.
+end(msftdata.ts)          # Cuándo termina.
+frequency(sbuxData.ts)    # Cuál es la frecuencia
+
+
+# Ahora, nos interesa consultar una ventana de tiempo sin perder la estructura ts de la serie original
+tmp <- window(sbuxData.ts, start = c(1993,3), end = c(1993,8)) ; class(tmp)
+
+
+# Combinando más series de tiempo, además de ser un objeto ts es un multiple time series, mts.
+sbuxmsft.ts <- cbind(sbuxData.ts, msftdata.ts); class(sbuxmsft.ts)
+
+
+# Seleccionando las primeras 6 filas:
+window(sbuxmsft.ts, start = c(1993,3), end= c(1993,8))
+```
+
+
+  - Podemos añadir gráficas de las respectivas series
+```{r plot, fig.align='center'}
+plot(sbuxData.ts, col = "black", lwd = 1, 
+     ylab = "Adjusted close",
+     main = "Monthly closing price of SBUX")
+
+
+
+# Graficando una ventana temporal de la ST
+plot(window(sbuxData.ts, start = c(2000,1), end = c(2005,12)), col = "black", lwd = 0.8, 
+     ylab = "Adjusted close",
+     main = "Monthly closing price of SBUX")
+
+
+```
+
+  - Graficando múltiples STs 
+```{r plot2, fig.align='center', fig.cap= 'fuente'}
+# Graficando un mts
+plot(sbuxmsft.ts, main = "Monthly closing price of SBUX and MSFT",
+       ylab = 'Adjusted close price')
+
+
+# Dos series en una misma gráfica. 
+plot(sbuxmsft.ts, plot.type = "single",col = c('blue', 'red'),
+     ylab = 'Adjusted close price',
+     main = "Monthly closing price of SBUX and MSFT", 
+     lty = 1:2)
+     legend(1994,25, legend = c("SBUX", "MSFT"), col = c("black", "grey"), lty = 1:2)
+
+
+```
+  
+  
+*Commentarios adicionales: `ts` sólo permite datos regularmente espaciados. No está hecho para datos diarios, sino mensuales y anuales*. Una desventaja que puede remediarse con la paquetería `zoo`.   
+
+
+### Librería `zoo`
+
+```{r zoo}
+library(zoo)
+
+# Generamos una secuencia con valores de fecha con datos mensuales
+td <- seq(as.Date("1993/3/1"),as.Date("2008/3/1"), "months"); class(td)
+
+# Encabezado del vector
+head(td)
+
+# Una alternativa tomando como ejemplo la data de SBUX
+
+str(sbuxData) # note que 'Date' está en formato chr
+
+td2 <- as.Date(sbuxData$Date, format = '%m/%d/%Y') ; class(td2) ; head(td2)
+
+
+# Combinación del índice de tiempo (td) a las dos series de los precios de cierre Sbux y Msft
+# Creando el objeto zoo
+sbuxData.zoo <- zoo(x = sbuxData$Adj.Close, order.by = td)
+msftdata.zoo <- zoo(x = msftdata$Adj.Close, order.by = td) ; class(msftdata.zoo); str(msftdata.zoo)
+
+
+# Consultas al objeto zoo.
+index(sbuxData.zoo)               # extrae las fechas de la serie
+coredata(msftdata.zoo)            # extrae los valores de la serie de precios
+
+sbuxData.zoo[as.Date(c("2005-12-01","2007-10-01"))] # Extracción de datos específicos de la serie para cada fecha
+                                                    # ts no podíamos hacer esto
+
+
+
+window(sbuxData.zoo, start = as.Date("2000/3/1")  # Consulta una ventana de tiempo    
+                   , end = as.Date("2003/3/1"))
+
+
+# Combinación de dos series temporales
+
+sbuxmsft.zoo <- cbind(sbuxData.zoo, msftdata.zoo) ; class(sbuxmsft.zoo); head(sbuxmsft.zoo,5) 
+```
+
+
+### Gráficas Series temporales objeto `zoo`
+
+```{r plotzoo, fig.align='center'}
+
+# Gráfica 1 con data separada
+
+plot(sbuxData.zoo, col = 'black', lty = 1, lwd = 0.8, ylim =c(0,50),
+     ylab = "Adjusted close price",
+     main = "Monthly closing prices of SBUX and MFST")
+lines(msftdata.zoo, col = 'grey', lty = 2 ,lwd = 1.3)
+legend(x = 'topleft', legend = c("SBUX","MFST"), col = c('black', 'grey'), lty = 1:2)     
+
+
+# Gráfica 2 con data combinada
+
+plot(sbuxmsft.zoo, plot.type = 'single', col = c("black", "grey"), lty = 1:2,
+     lwd = 2,  main = "Monthly closing prices of SBUX and MFST",
+     ylab = "Adjusted close price")
+legend(x = 'topleft', legend = c("SBUX","MFST"), col = c('black', 'grey'), lty = 1:2)     
+```
+
+
+### Lectura de datos como objeto `zoo`.
+
+```{r readzoo}
+
+# Carga de data con read.zoo
+sbuxData.zoo2 <- read.zoo("../DataSets/sbuxPrices.csv", format = "%m/%d/%Y", sep = ",", header = T) ; str(sbuxData.zoo2)
+```
+
+
+## Importar datos desde un proveedor externo (Yahoo Finance)
+
+```{r yahooFinanceExample, warning=FALSE, fig.align='center'}
+library(tseries)
+
+# La extracción de datos creará un objeto zoo, para crear un objeto ts, sólo modifica retclass = "zoo" -> "ts" 
+sbuxData.zoo3 <- get.hist.quote(instrument = "sbux",
+                                start = "1993-03-01", end = "2020-06-01",
+                                quote = "AdjClose",
+                                provider = "yahoo",
+                                origin = "1970-01-01",
+                                compression = "d",
+                                retclass = "zoo") ; class(sbuxData.zoo3) ; View(sbuxData.zoo3)
+
+# ídem para la data de msft
+
+# La extracción de datos creará un objeto zoo, para crear un objeto ts, sólo modifica retclass = "zoo" -> "ts" 
+msftData.zoo3 <- get.hist.quote(instrument = "msft",
+                                start = "1993-03-01", end = "2020-06-01",
+                                quote = "AdjClose",
+                                provider = "yahoo",
+                                origin = "1970-01-01",
+                                compression = "d",
+                                retclass = "zoo") ; class(msftData.zoo3) ; View(msftData.zoo3)
+
+
+# Gráfica de ST
+
+plot(cbind(sbuxData.zoo3,msftData.zoo3), plot.type = "single",col = c("black", "grey"), lty = 1,
+     lwd = 1,  main = "Monthly closing prices of SBUX and MFST",
+     ylab = "Adjusted close price")
+legend(x = 'topleft', legend = c("SBUX","MFST"), col = c('black', 'grey'), lty = 1)     
+```
+
+
+#### Data diaria
+
+```{r dailyData, fig.align='center'}
+
+dailyData <- rnorm(78, 0, 10)
+fechas <- seq(as.Date("2020-03-06"), as.Date("2020-05-22"), by = "day")
+as.numeric(format(fechas[1], "%j"))
+
+myS.ts <- ts(dailyData, start = c(2016,66), frequency = 365)
+
+plot(myS.ts) # no se visualiza muy bien
+
+
+# con Zoo podemos mejorar la visualización
+myS.zoo = zoo(dailyData, fechas)
+plot(myS.zoo)
+```
+
+
+
+
+

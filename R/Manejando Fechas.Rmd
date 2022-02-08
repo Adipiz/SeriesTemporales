@@ -1,0 +1,131 @@
+---
+title: "Manejo de fechas Series Temporales"
+author: "*Alonso Pizarro Lagunas*"
+date: "*4/1/2022*"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r librerias, warning=FALSE}
+
+library(lubridate)
+library(tseries)
+library(forecast)
+library(chron)
+```
+
+1. Opción 1: estándar en R base POSIXt: codificación estándar
+
+```{r  ejemplo1}
+
+x = as.POSIXct("2019-12-25 11:45:34") # número de segundos
+
+y = as.POSIXlt("2019-12-25 11:45:34") 
+
+
+unclass(x) # me devuelve el nùmero de segundos desde la fecha base (01-01-1970 00:00:00) hasta la fecha indicada
+
+unclass(y) # me devuelve una lista con los atributos de la fecha
+
+y$zone # componente de la zona horaria
+```
+
+
+2. Opción 2: Convertir a formato fecha con `as.Date`
+
+```{r ejemplo2}
+
+x = as.Date("2019-12-25")
+x ; unclass(x) # Número de días desde 1970
+class(x)
+```
+
+3. Opción 3: Usando el paquete chron
+
+
+```{r ejemplo3}
+x = chron("12/25/2019", "23:34:09")
+x
+
+class(x)
+unclass(x)
+
+```
+
+4. Opción 4: strptime convierte desde caracteres de texto
+
+
+```{r ejemplo4}
+
+a = as.character(c("1993-12-30 23:45",
+                   "1994-11-05 11:43",
+                   "1992-03-09 21:54"))
+
+str(a) # vemos la estructura del vector
+
+class(a) # clase
+
+b = strptime(a, format = "%Y-%m-%d %H:%M") # Transformamos la data de chr a datetime comn el formato correcto.
+b; class(b)
+```
+
+
+
+5. *Lubridate* nos permite trabajar con fechas y tiempos
+```{r lubridate}
+
+# Las siguientes líneas son equivalentes
+
+ymd(19931123) # Y/M/D
+dmy(23111993) # D/M/Y
+mdy(11231993) # M/D/Y
+
+
+# También podemos trabajar con fechas y tiempo a la vez.
+
+MyTimePoint <- ymd_hm("1993-11-23 11:23", tz = "Europe/Prague")
+
+# Podemos conocer las zonas horarias 
+
+# OlsonNames()
+
+
+class(MyTimePoint)
+
+# Podemos conocer cada componente de la fecha 
+
+
+minute(MyTimePoint)
+day(MyTimePoint)
+hour(MyTimePoint)
+year(MyTimePoint)
+month(MyTimePoint)
+
+# podemos modificar cada uno de los componnetes por separado
+
+year(MyTimePoint) <- 1995
+
+# Qué día de la semana corresponde a nuestra horario
+wday(MyTimePoint)
+wday(MyTimePoint, label = T, abbr = F )
+
+
+# Qué ocurre si me interesa saber la hora de santiago de Chile en mi fecha
+with_tz(MyTimePoint, tz = "America/Santiago")
+
+
+# Quiero crear el intervalo entre dos fechas
+
+fecha1 = ymd_hm("1993-09-23 11:23", tz = "Europe/Prague")
+fecha2 = ymd_hm("1995-11-02 15:23", tz = "Europe/Prague")
+
+myinterval = interval(start = fecha1, end = fecha2); myinterval
+
+
+```
+
+
